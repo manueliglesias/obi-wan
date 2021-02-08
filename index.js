@@ -1,16 +1,20 @@
 //@ts-check
+const AWS = require('aws-sdk');
+
+const { util: { uuid: { v4: uuid } } } = AWS;
+
 const posts = [
-    { id: "1", title: "First book", _version: 1, _lastChangedAt: 1611776141395, _deleted: null },
-    { id: "2", title: "Second book", _version: 2, _lastChangedAt: 1611776141396, _deleted: null },
-    { id: "3", title: "Third book", _version: 1, _lastChangedAt: 1611776141397, _deleted: null },
-    { id: "4", title: "Fourth book", _version: 3, _lastChangedAt: 1611776141398, _deleted: null },
-    { id: "5", title: "Fifth book", _version: 1, _lastChangedAt: 1611776141399, _deleted: null },
+    { id: uuid(), title: "First post", _version: 1, _lastChangedAt: 1611776141395, _deleted: null },
+    { id: uuid(), title: "Second post", _version: 2, _lastChangedAt: 1611776141396, _deleted: null },
+    { id: uuid(), title: "Third post", _version: 1, _lastChangedAt: 1611776141397, _deleted: null },
+    { id: uuid(), title: "Fourth post", _version: 3, _lastChangedAt: 1611776141398, _deleted: null },
+    { id: uuid(), title: "Fifth post", _version: 1, _lastChangedAt: 1611776141399, _deleted: null },
 ];
 
 const comments = [
-    { id: "1", postID: "3", content: "Some content", _version: 1, _lastChangedAt: 1611776141397, _deleted: null },
-    { id: "2", postID: "3", content: "Some content", _version: 1, _lastChangedAt: 1611776141398, _deleted: null },
-    { id: "3", postID: "4", content: "Some content", _version: 1, _lastChangedAt: 1611776141399, _deleted: null },
+    { id: uuid(), postID: posts[2].id, content: "Some content", _version: 1, _lastChangedAt: 1611776141397, _deleted: null },
+    { id: uuid(), postID: posts[2].id, content: "Some content", _version: 1, _lastChangedAt: 1611776141398, _deleted: null },
+    { id: uuid(), postID: posts[3].id, content: "Some content", _version: 1, _lastChangedAt: 1611776141399, _deleted: null },
 ];
 
 const operations = {
@@ -69,7 +73,7 @@ function deleteComment(args) {
     console.log(args);
 }
 
-function _query(records = [], { limit, lastSync } = { limit: 0, lastSync: undefined}) {
+function _query(records = [], { limit, lastSync } = { limit: 0, lastSync: undefined }) {
     const items = records
         .filter(({ _deleted, _lastChangedAt }) => {
             let include = true;
@@ -88,9 +92,7 @@ function _query(records = [], { limit, lastSync } = { limit: 0, lastSync: undefi
     return { items, startedAt, nextToken };
 }
 
-function _create(records = [], { input }) {
-    const id = `${records.length + 1}`;
-
+function _create(records = [], { input: { id = uuid(), ...input } }) {
     const item = {
         ...input,
         id,
@@ -110,7 +112,7 @@ function _update(records = [], { input }) {
     const item = records.find(p => p.id === id);
 
     if (item) {
-        if (item._version >= _version) {
+        if (_version < item._version) {
             return {
                 data: item,
                 errorMessage: 'Conflict',
@@ -124,7 +126,7 @@ function _update(records = [], { input }) {
     }
 
     return {
-        data: item
+        data: item,
     };
 }
 
@@ -134,7 +136,7 @@ function _delete(records = [], { input }) {
     const item = records.find(p => p.id === id);
 
     if (item) {
-        if (item._version >= _version) {
+        if (_version < item._version) {
             return {
                 data: item,
                 errorMessage: 'Conflict',
