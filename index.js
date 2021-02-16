@@ -20,7 +20,6 @@ const comments = [
 const operations = {
     syncPosts,
     syncComments,
-    // foo: () => "Bla",
     createPost,
     updatePost,
     deletePost,
@@ -66,11 +65,11 @@ function createComment(args) {
 }
 
 function updateComment(args) {
-    console.log(args);
+    return _update(comments, args);
 }
 
 function deleteComment(args) {
-    console.log(args);
+    return _delete(comments, args);
 }
 
 function _query(records = [], { limit, lastSync } = { limit: 0, lastSync: undefined }) {
